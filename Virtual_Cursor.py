@@ -58,15 +58,15 @@ def fingers_up(lmList):
 def draw_help_overlay(img):
     cv2.rectangle(img, (5, 5), (470, 230), (50, 50, 50), -1)
     help_text = [
-        "✋ All Fingers Up       = Pause",
-        "✊ Fist (All Down)      = Resume",
-        "☝️ Only Index Up        = Move Cursor",
-        "👉 Index + Thumb Touch  = Left Click",
-        "✌️ Middle + Ring Up     = Right Click",
-        "☝️✌️🤘 Index+Middle+Ring  = Scroll Up",
-        "☝️✌️🤙 Index+Middle+Pinky = Scroll Down",
-        "🤙 Pinky + Thumb        = Screenshot",
-        "🤏 Pinch + Move         = Drag & Drop",
+        "All Fingers Up       = Pause",
+        "Fist (All Down)      = Resume",
+        "Only Index Up        = Move Cursor",
+        "Index + Thumb Touch  = Left Click",
+        "Middle + Ring Up     = Right Click",
+        "Index+Middle+Ring  = Scroll Up",
+        "Index+Middle+Pinky = Scroll Down",
+        "Pinky + Thumb        = Screenshot",
+        "Pinch + Move         = Drag & Drop",
         "H key                   = Toggle Help",
         "ESC                     = Exit"
     ]
