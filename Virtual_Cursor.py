@@ -23,6 +23,9 @@ start = time.time()
 cap = cv2.VideoCapture(0)
 cap.set(3, 640)
 cap.set(4, 480)
+if not cap.isOpened():
+    print("❌ Unable to access webcam.")
+    exit()
 print("Cam initialized in:", round(time.time() - start, 2), "seconds")
 
 # Mediapipe setup
@@ -43,6 +46,8 @@ dragging = False
 logs = deque(maxlen=6)
 show_help = True
 last_screenshot_time = 0
+zoom_mode = False
+zoom_start_length = 0
 
 # Voice engine for feedback
 engine = pyttsx3.init()
@@ -56,7 +61,7 @@ def fingers_up(lmList):
     return fingers
 
 def draw_help_overlay(img):
-    cv2.rectangle(img, (5, 5), (470, 230), (50, 50, 50), -1)
+    cv2.rectangle(img, (5, 5), (470, 250), (50, 50, 50), -1)
     help_text = [
         "All Fingers Up       = Pause",
         "Fist (All Down)      = Resume",
@@ -67,8 +72,9 @@ def draw_help_overlay(img):
         "Index+Middle+Pinky = Scroll Down",
         "Pinky + Thumb        = Screenshot",
         "Pinch + Move         = Drag & Drop",
-        "H key                   = Toggle Help",
-        "ESC                     = Exit"
+        "Index + Thumb Spread = Zoom",
+        "H key                = Toggle Help",
+        "ESC                  = Exit"
     ]
     for i, txt in enumerate(help_text):
         cv2.putText(img, txt, (10, 30 + i * 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
@@ -87,11 +93,15 @@ def take_screenshot():
         ctypes.windll.user32.MessageBoxW(0, "Screenshot Taken!", "Virtual Mouse", 1)
         engine.say("Screenshot taken")
         engine.runAndWait()
-        logs.appendleft("Screenshot 📸")
+        logs.appendleft("Screenshot \U0001f4f8")
         last_screenshot_time = current_time
 
 while True:
     success, img = cap.read()
+    if not success or img is None:
+        print("❌ Failed to read from webcam.")
+        continue
+
     img = cv2.flip(img, 1)
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     result = hands.process(imgRGB)
@@ -139,7 +149,7 @@ while True:
                     length = np.hypot(x2 - x1, y2 - y1)
                     if fingers[0] == 1 and fingers[1] == 1 and length < 40:
                         pyautogui.click()
-                        logs.appendleft("Left Click 👈")
+                        logs.appendleft("Left Click \U0001f448")
 
                     if fingers == [0, 0, 1, 1, 0]:
                         pyautogui.rightClick()
@@ -166,8 +176,23 @@ while True:
                     else:
                         if dragging:
                             pyautogui.mouseUp()
-                            logs.appendleft("Dropped 📤")
+                            logs.appendleft("Dropped \U0001f4e4")
                             dragging = False
+
+                    if fingers == [1, 1, 0, 0, 0]:
+                        zoom_distance = np.hypot(x2 - x1, y2 - y1)
+                        if zoom_start_length == 0:
+                            zoom_start_length = zoom_distance
+                        elif abs(zoom_distance - zoom_start_length) > 20:
+                            if zoom_distance > zoom_start_length:
+                                pyautogui.hotkey('ctrl', '+')
+                                logs.appendleft("Zoom In 🔍")
+                            else:
+                                pyautogui.hotkey('ctrl', '-')
+                                logs.appendleft("Zoom Out 🔎")
+                            zoom_start_length = zoom_distance
+                    else:
+                        zoom_start_length = 0
 
     for i, log in enumerate(logs):
         cv2.putText(img, f"{log}", (950, 30 + i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (200, 255, 255), 2)
